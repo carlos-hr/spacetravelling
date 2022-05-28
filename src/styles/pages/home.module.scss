@@ -1,0 +1,49 @@
+// TODO
+.container {
+  max-width: 1120px;
+  margin: auto;
+  padding: 0 2rem;
+  margin-top: 3rem;
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  > p {
+    font-size: 1.125rem;
+    margin-top: 0.5rem;
+    color: var(--text-gray);
+  }
+
+  .postInfo {
+    margin-top: 1.5rem;
+    max-width: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-gray);
+
+    time,
+    p {
+      display: flex;
+      align-items: center;
+
+      img {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: var(--pink);
+    border: none;
+    background: none;
+    margin-top: 4rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
