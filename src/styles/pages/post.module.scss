@@ -1,0 +1,54 @@
+// TODO
+.container {
+  > img {
+    width: 100%;
+  }
+}
+
+.content {
+  max-width: 1120px;
+  margin: 3rem auto;
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+
+  .title {
+    align-self: center;
+
+    .postInfo {
+      margin-top: 1.5rem;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-gray);
+
+      time,
+      p {
+        display: flex;
+        align-items: center;
+
+        img {
+          margin-right: 0.5rem;
+        }
+      }
+    }
+  }
+
+  .post {
+    align-self: flex-start;
+    max-width: 720px;
+    margin-top: 3rem;
+    text-align: justify;
+
+    h1 {
+      font-size: 1.75rem;
+    }
+
+    p {
+      font-size: 1.125rem;
+      margin-top: 0.5rem;
+      color: var(--text-gray);
+    }
+  }
+}
