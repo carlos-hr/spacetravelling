@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { GetStaticPaths, GetStaticProps } from 'next';
 
 import { getPrismicClient } from '../../services/prismic';
