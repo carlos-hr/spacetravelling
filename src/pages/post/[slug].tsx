@@ -1,12 +1,16 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable react/no-danger */
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { GetStaticPaths, GetStaticProps } from 'next';
-
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { RichText } from 'prismic-dom';
 import { getPrismicClient } from '../../services/prismic';
-
-import commonStyles from '../../styles/common.module.scss';
 import styles from '../../styles/pages/post.module.scss';
 
 interface Post {
+  uid: string;
   first_publication_date: string | null;
   data: {
     title: string;
@@ -27,63 +31,117 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post(): JSX.Element {
+export default function Post({ post }: PostProps): JSX.Element {
+  const router = useRouter();
+
+  const readingTime = Math.ceil(
+    post.data.content.reduce((counter, content) => {
+      const bodyWords = RichText.asText(content.body).split(' ').length;
+      const headingWords = content.heading.split(' ').length;
+      const words = bodyWords + headingWords;
+      return counter + words;
+    }, 0) / 200
+  );
+
+  if (router.isFallback) {
+    return <div>Carregando...</div>;
+  }
+
   return (
-    <div className={styles.container}>
-      <img src="/Banner.png" alt="banner" />
+    <>
+      <Head>
+        <title>Post | {post?.data.title}</title>
+      </Head>
+      <div className={styles.container}>
+        {post && (
+          <>
+            <img src={post.data.banner.url} alt="banner" />
 
-      <div className={styles.content}>
-        <div className={styles.title}>
-          <h1>Criando um app CRA do zero</h1>
+            <div className={styles.content}>
+              <div className={styles.title}>
+                <h1>{post.data.title}</h1>
 
-          <div className={styles.postInfo}>
-            <time>
-              <img src="/images/calendar.svg" alt="calendar" />
-              15 Mar 2021
-            </time>
-            <p>
-              <img src="/images/user.svg" alt="user" />
-              Joseph Oliveira
-            </p>
+                <div className={styles.postInfo}>
+                  <time>
+                    <img src="/images/calendar.svg" alt="calendar" />
+                    {format(
+                      new Date(post.first_publication_date),
+                      'd MMM yyyy',
+                      {
+                        locale: ptBR,
+                      }
+                    )}
+                  </time>
+                  <p>
+                    <img src="/images/user.svg" alt="user" />
+                    {post.data.author}
+                  </p>
 
-            <time>
-              <img src="/images/clock.svg" alt="clock" />
-              4m
-            </time>
-          </div>
-        </div>
+                  <time>
+                    <img src="/images/clock.svg" alt="clock" />
+                    {`${readingTime} min`}
+                  </time>
+                </div>
+              </div>
 
-        <div className={styles.post}>
-          <h1>Proin et varius</h1>
-
-          <p>
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Eum dicta
-            dolor quos, necessitatibus facere, ea quis voluptatem porro delectus
-            minus beatae odit earum natus similique sunt quae deserunt
-            cupiditate libero. Lorem ipsum dolor sit amet consectetur,
-            adipisicing elit. Ad blanditiis fugit et molestias, quas temporibus
-            voluptatibus nisi. Soluta nihil, enim suscipit veritatis ratione
-            expedita sapiente totam beatae. Provident, laborum facilis. Lorem
-            ipsum, dolor sit amet consectetur adipisicing elit. Perferendis
-            dolor sunt enim rem quam libero aut dolore dolorum vero esse,
-            commodi repellendus nesciunt doloribus a hic mollitia eveniet
-          </p>
-        </div>
+              {post.data.content.map(content => {
+                return (
+                  <div className={styles.post} key={content.heading}>
+                    <h1>{content.heading}</h1>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: RichText.asHtml(content.body),
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient({});
-//   const posts = await prismic.getByType(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient({});
+  const posts = await prismic.getByType('post');
 
-//   // TODO
-// };
+  const paths = posts.results.reduce((prevList, nextPost) => {
+    return prevList.concat({ params: { slug: nextPost.uid } });
+  }, []);
 
-// export const getStaticProps = async ({params }) => {
-//   const prismic = getPrismicClient({});
-//   const response = await prismic.getByUID(TODO);
+  return {
+    paths,
+    fallback: true,
+  };
+};
 
-//   // TODO
-// };
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const { slug } = params;
+
+  const prismic = getPrismicClient({});
+  const response = await prismic.getByUID('post', String(slug));
+
+  const post = {
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
+    data: {
+      title: response.data.title,
+      subtitle: response.data.subtitle,
+      author: response.data.author,
+      banner: {
+        url: response.data.banner.url,
+      },
+      content: response.data.content,
+    },
+  };
+
+  return {
+    props: {
+      post,
+    },
+    revalidate: 60 * 60, // 1hour
+  };
+};
